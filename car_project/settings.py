@@ -91,3 +91,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = 'driver_dashboard'
 LOGOUT_REDIRECT_URL = 'login'
 STATIC_ROOT = BASE_DIR / "staticfiles"
+LOGIN_URL ='/admin/login/'
+LOGIN_REDIRECT_URL ='/dashboard-admin/'
