@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>ใบตรวจเช็คสภาพรถยนต์ - {{ record.vehicle.license_plate }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        @page { 
+            size: A4; 
+            margin: 0.5cm 1cm;
+        }
+        
+        body { 
+            font-family: 'Sarabun', sans-serif; 
+            color: #000; 
+            background: #fff; 
+            font-size: 12px;
+            line-height: 1.3;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            body { -webkit-print-color-adjust: exact; }
+        }
+
+        .header-box { 
+            border: 1px solid #000; 
+            padding: 5px; 
+            text-align: center; 
+            margin-bottom: 10px; 
+            background-color: #f8f9fa;
+        }
+        
+        h3 { font-size: 18px; font-weight: bold; margin: 0; }
+        p { margin: 0; }
+
+        .info-table { margin-bottom: 10px; font-size: 12px; }
+        .info-table td { padding: 4px 8px; }
+        .checklist-category { 
+            margin-top: 8px; 
+            border-bottom: 1px solid #000; 
+            padding-bottom: 2px; 
+            font-weight: bold; 
+            font-size: 13px; 
+            background-color: #eee;
+            padding-left: 5px;
+        }
+        .check-item { 
+            display: flex; 
+            justify-content: space-between; 
+            padding: 2px 0;
+            border-bottom: 1px dotted #ddd; 
+            font-size: 12px;
+        }
+        .badge-print {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        .bg-success-print { background-color: #d4edda !important; color: #155724 !important; border-color: #c3e6cb; }
+        .bg-danger-print { background-color: #f8d7da !important; color: #721c24 !important; border-color: #f5c6cb; }
+        .bg-secondary-print { background-color: #e2e3e5 !important; color: #383d41 !important; border-color: #d6d8db; }
+
+        .notes-box {
+            margin-top: 10px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            height: 50px;
+        }
+
+        .signature-area { margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="container-fluid">
+        <div class="text-end mb-2 no-print mt-2">
+            <button onclick="window.print()" class="btn btn-primary btn-sm">🖨️ พิมพ์ PDF</button>
+            <button onclick="window.close()" class="btn btn-secondary btn-sm">ปิด</button>
+        </div>
+
+        <div class="header-box">
+            <h3>ใบตรวจเช็คสภาพรถยนต์ประจำวัน</h3>
+            <p>ระบบจัดการยานพาหนะ (Vehicle Inspection System)</p>
+        </div>
+
+        <table class="table table-bordered table-sm info-table">
+            <tr>
+                <td width="15%" class="table-light fw-bold">ทะเบียนรถ:</td>
+                <td width="35%">{{ record.vehicle.license_plate }}</td>
+                <td width="15%" class="table-light fw-bold">รุ่นรถ:</td>
+                <td width="35%">{{ record.vehicle.model }}</td>
+            </tr>
+            <tr>
+                <td class="table-light fw-bold">วันที่ตรวจ:</td>
+                <td>{{ record.timestamp|date:"d/m/Y เวลา H:i" }}</td>
+                <td class="table-light fw-bold">เลขไมล์:</td>
+                <td>{{ record.odometer_reading }} กม.</td>
+            </tr>
+            <tr>
+                <td class="table-light fw-bold">ผู้ตรวจ:</td>
+                <td>{{ record.driver.first_name }} {{ record.driver.last_name }} ({{ record.driver.username }})</td>
+                <td class="table-light fw-bold">ระดับน้ำมัน:</td>
+                <td>{{ record.get_fuel_level_display }}</td>
+            </tr>
+        </table>
+
+        <div class="row gx-3"> <div class="col-6">
+                {% for category, items in formatted_checklist.items %}
+                    {% if forloop.counter|divisibleby:2 == False %} 
+                        <div class="checklist-category">{{ category }}</div>
+                        {% for item in items %}
+                        <div class="check-item">
+                            <span>{{ item.label }}</span>
+                            <span>
+                                {% if item.status == True %}
+                                    <span class="badge-print bg-success-print">✓ ปกติ</span>
+                                {% elif item.status == False %}
+                                    <span class="badge-print bg-danger-print">✕ ผิดปกติ</span>
+                                {% else %}
+                                    <span class="badge-print bg-secondary-print">-</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <div class="col-6">
+                {% for category, items in formatted_checklist.items %}
+                    {% if forloop.counter|divisibleby:2 %} 
+                        <div class="checklist-category">{{ category }}</div>
+                        {% for item in items %}
+                        <div class="check-item">
+                            <span>{{ item.label }}</span>
+                            <span>
+                                {% if item.status == True %}
+                                    <span class="badge-print bg-success-print">✓ ปกติ</span>
+                                {% elif item.status == False %}
+                                    <span class="badge-print bg-danger-print">✕ ผิดปกติ</span>
+                                {% else %}
+                                    <span class="badge-print bg-secondary-print">-</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="notes-box">
+            <strong>หมายเหตุ:</strong> {{ record.notes|default:"-" }}
+        </div>
+
+        <div class="signature-area">
+            <table style="width: 100%; text-align: center;">
+                <tr>
+                    <td width="50%">
+                        ___________________________<br>
+                        ({{ record.driver.first_name }} {{ record.driver.last_name }})<br>
+                        <span style="font-size: 11px;">ผู้ตรวจสภาพรถ</span>
+                    </td>
+                    <td width="50%">
+                        ___________________________<br>
+                        (..........................................)<br>
+                        <span style="font-size: 11px;">หัวหน้าแผนกยานพาหนะ</span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        
+        <div style="text-align: right; font-size: 9px; color: #999; margin-top: 5px;">
+            พิมพ์เมื่อ: {% now "d/m/Y H:i" %}
+        </div>
+    </div>
+
+</body>
+</html>

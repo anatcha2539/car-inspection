@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load form_filters %}
+
+{% block content %}
+
+<div class="alert alert-info" role="alert">
+  <h4 class="alert-heading">กำลังตรวจเช็ค</h4>
+  <p>วันที่: {{ schedule_item.date|date:"l, j F Y" }}</p>
+  <hr>
+  <h5 class="mb-0">
+    <i class="bi bi-car-front-fill"></i>
+    <strong>{{ schedule_item.vehicle.license_plate }}</strong> ({{ schedule_item.vehicle.model }})
+  </h5>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+{% endif %}
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h3 class="h5 mb-0"><i class="bi bi-clipboard2-check-fill"></i> บันทึกการตรวจเช็ค</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST"> {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="{{ inspection_form.vehicle.id_for_label }}" class="form-label">รถที่ตรวจ</label>
+                        {{ inspection_form.vehicle }}
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="{{ inspection_form.odometer_reading.id_for_label }}" class="form-label">เลขไมล์ปัจจุบัน</label>
+                            {{ inspection_form.odometer_reading }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ inspection_form.fuel_level.id_for_label }}" class="form-label">ระดับน้ำมัน</label>
+                            {{ inspection_form.fuel_level }}
+                        </div>
+                    </div>
+                    <hr class="my-3">
+                    <label class="form-label">รายการตรวจเช็ค</label>
+                    <div class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+                        {% for category, items in inspection_form.CHECKLIST_CATEGORIES.items %}
+                            <h6 class="mt-2">{{ category }}</h6>
+                            <div class="ps-3">
+                                {% for field_name, field_label in items %}
+                                    <div class="form-check">
+                                        {{ inspection_form|get_field:field_name }}
+                                        <label class="form-check-label" for="{{ inspection_form|get_field_id:field_name }}">
+                                            {{ field_label }}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <hr class="my-3">
+                    <div class="mb-3">
+                        <label for="{{ inspection_form.notes.id_for_label }}" class="form-label">หมายเหตุเพิ่มเติม</label>
+                        {{ inspection_form.notes }}
+                    </div>
+                    <button type="submit" name="submit_inspection" class="btn btn-primary w-100">
+                        <i class="bi bi-save-fill"></i> บันทึกการตรวจ
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-danger text-white">
+                <h3 class="h5 mb-0"><i class="bi bi-exclamation-triangle-fill"></i> แจ้งปัญหารถยนต์</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="{{ problem_form.vehicle.id_for_label }}" class="form-label">รถที่พบปัญหา</label>
+                        {{ problem_form.vehicle }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ problem_form.description.id_for_label }}" class="form-label">อธิบายปัญหาที่พบ</label>
+                        {{ problem_form.description }}
+                    </div>
+                    <button type="submit" name="submit_problem" class="btn btn-danger w-100">
+                        <i class="bi bi-send-fill"></i> แจ้งปัญหา
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

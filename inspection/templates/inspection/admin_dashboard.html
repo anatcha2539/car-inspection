@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard - Vehicle System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Sarabun', sans-serif; }
+        .card-box {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+            height: 100%;
+        }
+        .card-box:hover { transform: translateY(-3px); }
+        .icon-circle {
+            width: 50px; height: 50px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; color: #fff;
+        }
+        .bg-blue { background: linear-gradient(45deg, #4099ff, #73b4ff); }
+        .bg-green { background: linear-gradient(45deg, #2ed8b6, #59e0c5); }
+        .bg-red { background: linear-gradient(45deg, #FF5370, #ff869a); }
+        .bg-yellow { background: linear-gradient(45deg, #FFB64D, #ffcb80); }
+        
+        .stat-title { font-size: 14px; color: #888; margin-bottom: 5px; }
+        .stat-value { font-size: 28px; font-weight: bold; color: #333; }
+        
+        .chart-container { position: relative; height: 300px; width: 100%; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">🚗 Vehicle Admin</a>
+    <div class="d-flex">
+        <span class="navbar-text text-white me-3">สวัสดี, {{ request.user }}</span>
+        <a href="{% url 'admin:index' %}" class="btn btn-outline-light btn-sm">ไปหน้า Backend</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container pb-5">
+    <h2 class="mb-4 text-secondary"><i class="fas fa-tachometer-alt"></i> ภาพรวมระบบยานพาหนะ</h2>
+
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card-box d-flex align-items-center">
+                <div class="icon-circle bg-blue me-3"><i class="fas fa-car"></i></div>
+                <div>
+                    <div class="stat-title">จำนวนรถทั้งหมด</div>
+                    <div class="stat-value">{{ total_vehicles }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card-box d-flex align-items-center">
+                <div class="icon-circle bg-green me-3"><i class="fas fa-clipboard-check"></i></div>
+                <div>
+                    <div class="stat-title">ตรวจแล้ววันนี้</div>
+                    <div class="stat-value">{{ inspections_today }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card-box d-flex align-items-center">
+                <div class="icon-circle bg-red me-3"><i class="fas fa-tools"></i></div>
+                <div>
+                    <div class="stat-title">แจ้งซ่อม (ค้าง)</div>
+                    <div class="stat-value">{{ active_issues }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card-box d-flex align-items-center">
+                <div class="icon-circle bg-yellow me-3"><i class="fas fa-gas-pump"></i></div>
+                <div>
+                    <div class="stat-title">เฉลี่ยการใช้รถ</div>
+                    <div class="stat-value">--</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-8 mb-3">
+            <div class="card-box">
+                <h5 class="mb-3">📊 สถิติการตรวจเช็ค 7 วันล่าสุด</h5>
+                <div class="chart-container">
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card-box">
+                <h5 class="mb-3">🚨 สถานะการแจ้งซ่อม</h5>
+                <div class="chart-container">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <div class="card-box">
+                <h5 class="mb-3 text-danger"><i class="fas fa-exclamation-circle"></i> ปัญหาที่แจ้งเข้ามาล่าสุด</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>รถ</th>
+                                <th>ปัญหา</th>
+                                <th>สถานะ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for problem in recent_problems %}
+                            <tr>
+                                <td>{{ problem.vehicle.license_plate }}</td>
+                                <td>{{ problem.description|truncatechars:20 }}</td>
+                                <td><span class="badge bg-danger">ใหม่</span></td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center text-muted">ไม่มีปัญหาใหม่</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-end mt-2">
+                    <a href="/admin/inspection/problemreport/" class="text-decoration-none small">ดูทั้งหมด &rarr;</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <div class="card-box">
+                <h5 class="mb-3 text-success"><i class="fas fa-history"></i> ประวัติการตรวจล่าสุด</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>เวลา</th>
+                                <th>รถ</th>
+                                <th>คนขับ</th>
+                                <th>PDF</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in recent_inspections %}
+                            <tr>
+                                <td>{{ record.timestamp|date:"H:i" }}</td>
+                                <td>{{ record.vehicle.license_plate }}</td>
+                                <td>{{ record.driver.first_name }}</td>
+                                <td>
+                                    <a href="{% url 'print_inspection' record.pk %}" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="fas fa-print"></i></a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center text-muted">ยังไม่มีการตรวจวันนี้</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                 <div class="text-end mt-2">
+                    <a href="/admin/inspection/inspectionrecord/" class="text-decoration-none small">ดูทั้งหมด &rarr;</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctxBar = document.getElementById('barChart').getContext('2d');
+    new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+            labels: {{ bar_labels|safe }},
+            datasets: [{
+                label: 'จำนวนรถที่ตรวจ',
+                data: {{ bar_data|safe }},
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1,
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+    });
+    const ctxPie = document.getElementById('pieChart').getContext('2d');
+    new Chart(ctxPie, {
+        type: 'doughnut',
+        data: {
+            labels: {{ pie_labels|safe }},
+            datasets: [{
+                data: {{ pie_data|safe }},
+                backgroundColor: [
+                    '#FF6384',
+                    '#FFCE56',
+                    '#36A2EB',
+                    '#4BC0C0'  
+                ],
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+        }
+    });
+</script>
+
+</body>
+</html>
