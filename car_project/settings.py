@@ -18,7 +18,7 @@ SECRET_KEY = 'django-insecure-k29%4al@#4l8a*5=wqfq*&b%aw%(!j3yf71qyfopl#xvk8%x#e
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['anatcha.pythonanywhere.com', '127.0.0.1', 'localhost']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -93,3 +93,4 @@ LOGOUT_REDIRECT_URL = 'login'
 STATIC_ROOT = BASE_DIR / "staticfiles"
 LOGIN_URL ='/admin/login/'
 LOGIN_REDIRECT_URL ='/dashboard-admin/'
+LOGOUT_REDIRECT_URL ='/admin/login/'
