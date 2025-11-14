@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% load form_filters %}
+
+{% block title %}ตรวจเช็ค {{ schedule_item.vehicle.license_plate }}{% endblock %}
+
+{% block content %}
+
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+    * {
+        font-family: 'Kanit', sans-serif;
+    }
+    h1, h2, h3, h4, h5, h6 {
+        font-weight: 600;
+        letter-spacing: 0.4px;
+    }
+    .card-title { font-size: 1.1rem; font-weight: 600; }
+    label.form-label { font-weight: 500; }
+    .nav-link { font-weight: 500 !important; }
+    .btn { font-weight: 600 !important; }
+    .list-group-item label { font-weight: 500; }
+
+    /* ✅ (2) เพิ่มระยะห่างให้ 2 คอลัมน์ปุ่มติ๊ก */
+    .form-check-inline {
+        margin-right: 1.5rem !important;
+    }
+</style>
+
+<div class="page-header">
+    <h1 class="h2">ตรวจเช็คสภาพรถ</h1>
+    <p class="h4 text-warning">{{ schedule_item.vehicle.license_plate }} ({{ schedule_item.vehicle.model }})</p>
+</div>
+
+{% if messages %}
+    {% endif %}
+
+<ul class="nav nav-tabs nav-fill mb-3" id="myTab" role="tablist">
+    </ul>
+
+<div class="tab-content" id="myTabContent">
+
+  <div class="tab-pane fade show active" id="inspection-pane" role="tabpanel">
+    <form method="POST">
+        {% csrf_token %}
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">ข้อมูลพื้นฐาน</h5>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">รถทะเบียน</label>
+                        <input type="text" class="form-control" value="{{ schedule_item.vehicle.license_plate }}" disabled>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label" for="{{ inspection_form.odometer_reading.id_for_label }}">เลขไมล์ปัจจุบัน (กม.)*</label>
+                        {{ inspection_form.odometer_reading }}
+                        {% if inspection_form.odometer_reading.errors %}
+                            <div class="text-danger small">{{ inspection_form.odometer_reading.errors.as_text }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <hr>
+                <h5 class="card-title">รายการตรวจเช็ค</h5>
+                <p class="text-muted">เลือก "ปกติ" หรือ "มีปัญหา"</p>
+
+                <div class="row">
+                
+                {% for category, field_names in inspection_form.checklist_fields.items %}
+                    <div class="col-md-12 col-lg-6 mb-4">
+                        <h6><i class="bi bi-tag-fill"></i> {{ category }}</h6>
+                        <ul class="list-group">
+                            
+                            {% for field_name in field_names %}
+                            {% with field=inspection_form|get_field:field_name %}
+                            
+                            <li class="list-group-item d-flex flex-column flex-md-row justify-content-md-between align-items-md-center">
+    
+                                <label class="form-check-label mb-0 me-md-3">{{ field.label }}</label>
+                                
+                                <div class="mt-2 mt-md-0 flex-shrink-0">
+                                    
+                                    {% for choice in field %}
+                                    <div class="form-check form-check-inline">
+                                        {{ choice.tag }} <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                            {{ choice.choice_label }} </label>
+                                    </div>
+                                    {% endfor %}
+                                    
+                                </div>
+                            </li>
+                            
+                            {% endwith %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endfor %}
+                </div>
+                
+                <hr>
+                <div class="mb-3">
+                    <label class="form-label" for="{{ inspection_form.remarks.id_for_label }}">หมายเหตุเพิ่มเติม (ถ้ามี)</label>
+                    {{ inspection_form.remarks }}
+                </div>
+                <div class="d-grid gap-2">
+                    <button type="submit" name="submit_inspection" class="btn btn-success btn-lg">
+                        <i class="bi bi-check-circle-fill"></i> บันทึกการตรวจเช็ค (ยืนยันว่าเสร็จสิ้น)
+                    </button>
+                    <a href="{% url 'driver_dashboard' %}" class="btn btn-secondary">ยกเลิก</a>
+                </div>
+
+            </div>
+        </div>
+    </form>
+  </div>
+
+  <div class="tab-pane fade" id="problem-pane" role="tabpanel">
+    </div>
+
+</div>
+{% endblock %}

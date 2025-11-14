@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="h2">Dashboard สรุปผลผู้ดูแลระบบ</h1>
+    <p>ภาพรวมการตรวจเช็คสภาพรถและการแจ้งซ่อม</p>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card shadow-sm text-center text-primary">
+            <div class="card-body">
+                <i class="bi bi-car-front-fill h1"></i>
+                <h3 class="card-title">{{ total_vehicles }}</h3>
+                <p class="card-text">จำนวนรถทั้งหมด</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm text-center text-success">
+            <div class="card-body">
+                <i class="bi bi-check-circle-fill h1"></i>
+                <h3 class="card-title">{{ inspections_today }}</h3>
+                <p class="card-text">รายการที่ตรวจวันนี้</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm text-center text-danger">
+            <div class="card-body">
+                <i class="bi bi-tools h1"></i>
+                <h3 class="card-title">{{ active_issues }}</h3>
+                <p class="card-text">ปัญหารอการแก้ไข</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-bar-chart-line-fill"></i> สถิติการตรวจ 7 วันย้อนหลัง</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="inspectionChart" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-pie-chart-fill"></i> สถานะการแจ้งซ่อม</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="problemChart" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header"><h5 class="mb-0 text-danger"><i class="bi bi-exclamation-triangle-fill"></i> ปัญหาใหม่ที่แจ้งเข้ามา</h5></div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <tbody>
+                        {% for problem in recent_problems %}
+                        <tr>
+                            <td>{{ problem.vehicle.license_plate }}</td>
+                            <td>{{ problem.description|truncatechars:50 }}</td>
+                            <td><a href="/admin/inspection/problemreport/{{problem.id}}/change/" class="btn btn-sm btn-outline-danger">จัดการ</a></td>
+                        </tr>
+                        {% empty %}
+                        <tr><td class="text-center text-muted">ไม่มีปัญหาใหม่</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header"><h5 class="mb-0 text-success"><i class="bi bi-check-all"></i> การตรวจเช็คล่าสุด</h5></div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <tbody>
+                        {% for inspection in recent_inspections %}
+                        <tr>
+                            <td>{{ inspection.vehicle.license_plate }}</td>
+                            <td>{{ inspection.driver.username }}</td>
+                            <td>{{ inspection.timestamp|date:"H:i" }} น.</td>
+                            <td><a href="{% url 'print_inspection' inspection.id %}" class="btn btn-sm btn-outline-primary" target="_blank"><i class="bi bi-printer"></i> พิมพ์</a></td>
+                        </tr>
+                        {% empty %}
+                        <tr><td class="text-center text-muted">ยังไม่มีการตรวจเช็ค</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // (1) กราฟแท่ง
+    const ctxBar = document.getElementById('inspectionChart');
+    new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+            labels: {{ bar_labels|safe }},
+            datasets: [{
+                label: 'จำนวนการตรวจ',
+                data: {{ bar_data|safe }},
+                backgroundColor: 'rgba(0, 74, 153, 0.6)',
+                borderColor: 'rgba(0, 74, 153, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: { beginAtZero: true, allowDecimals: false }
+            },
+            responsive: true,
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    // (2) กราฟวงกลม
+    const ctxPie = document.getElementById('problemChart');
+    new Chart(ctxPie, {
+        type: 'pie',
+        data: {
+            labels: {{ pie_labels|safe }},
+            datasets: [{
+                label: 'สถานะ',
+                data: {{ pie_data|safe }},
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.6)', // NEW (Red)
+                    'rgba(255, 206, 86, 0.6)', // IN_PROGRESS (Yellow)
+                    'rgba(75, 192, 192, 0.6)'  // RESOLVED (Green)
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top' }
+            }
+        }
+    });
+</script>
+{% endblock %}

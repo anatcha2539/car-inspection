@@ -10,24 +10,35 @@ from django.db.models import Count, Q
 from datetime import timedelta
 import json
 
+# ==================================
+# 1. DRIVER DASHBOARD (WEEKLY VIEW)
+# ==================================
 @login_required
 def driver_dashboard(request):
     today = timezone.now().date()
-    todays_schedules = Schedule.objects.filter(
+    start_of_week = today - timedelta(days=today.weekday())
+    end_of_week = start_of_week + timedelta(days=6)
+    
+    weekly_schedules = Schedule.objects.filter(
         driver=request.user, 
-        date=today
-    ).order_by('vehicle__license_plate')
+        date__range=[start_of_week, end_of_week]
+    ).order_by('date', 'vehicle__license_plate')
+    
     my_inspections = InspectionRecord.objects.filter(driver=request.user).order_by('-timestamp')[:10]
 
     context = {
-        'todays_schedules': todays_schedules,
+        'todays_schedules': weekly_schedules,
+        'start_of_week': start_of_week,
+        'end_of_week': end_of_week,
         'my_inspections': my_inspections,
     }
     return render(request, 'inspection/dashboard.html', context)
 
+# ==================================
+# 2. INSPECTION FORM (✅ แก้ Bug แล้ว)
+# ==================================
 @login_required
 def inspect_vehicle_form(request, schedule_id):
-
     schedule_item = get_object_or_404(
         Schedule, 
         pk=schedule_id, 
@@ -43,7 +54,9 @@ def inspect_vehicle_form(request, schedule_id):
 
     if request.method == 'POST':
         inspection_form = InspectionRecordForm(request.POST, initial_vehicle=vehicle_from_schedule)
-        problem_form = ProblemReportForm(request.POST, initial_vehicle=vehicle_from_schedule)
+        
+        # (แก้ Bug: ลบ initial_vehicle ออกจาก ProblemReportForm)
+        problem_form = ProblemReportForm(request.POST) 
 
         if 'submit_inspection' in request.POST:
             if inspection_form.is_valid():
@@ -55,6 +68,7 @@ def inspect_vehicle_form(request, schedule_id):
                 schedule_item.status = 'DONE'
                 schedule_item.save()
 
+                # (ส่วนเช็คเลขไมล์)
                 try:
                     vehicle = record.vehicle
                     current_mileage = record.odometer_reading
@@ -83,12 +97,10 @@ def inspect_vehicle_form(request, schedule_id):
                 except Exception as e:
                     messages.error(request, f'เกิดข้อผิดพลาดในการวิเคราะห์เลขไมล์: {e}')
 
-                messages.success(request, f'✅ บันทึกการตรวจเช็ค {vehicle.license_plate} เรียบร้อย!')
+                messages.success(request, f'✅ บันทึกการตรวจเช็ค {vehicle_from_schedule.license_plate} เรียบร้อย!')
                 return redirect('driver_dashboard')
             else:
-
                 messages.error(request, 'ข้อมูลการตรวจเช็คไม่ถูกต้อง กรุณาตรวจสอบ')
-
 
         elif 'submit_problem' in request.POST:
             if problem_form.is_valid():
@@ -102,8 +114,11 @@ def inspect_vehicle_form(request, schedule_id):
                 messages.error(request, 'ข้อมูลการแจ้งปัญหาไม่ถูกต้อง กรุณาตรวจสอบ')
 
     else:
+        # (นี่คือส่วน GET request)
         inspection_form = InspectionRecordForm(initial=initial_data, initial_vehicle=vehicle_from_schedule)
-        problem_form = ProblemReportForm(initial=initial_data, initial_vehicle=vehicle_from_schedule)
+        
+        # (แก้ Bug: ลบ initial_vehicle ออกจาก ProblemReportForm)
+        problem_form = ProblemReportForm(initial=initial_data)
 
     context = {
         'schedule_item': schedule_item,
@@ -112,6 +127,9 @@ def inspect_vehicle_form(request, schedule_id):
     }
     return render(request, 'inspection/inspection_form.html', context)
 
+# ==================================
+# 3. PRINT LAYOUT
+# ==================================
 @login_required
 def print_inspection(request, record_id):
     record = get_object_or_404(InspectionRecord, pk=record_id)
@@ -134,32 +152,34 @@ def print_inspection(request, record_id):
     }
     return render(request, 'inspection/print_layout.html', context)
 
+# ==================================
+# 4. ADMIN DASHBOARD
+# ==================================
 @staff_member_required
 def admin_dashboard(request):
+    # ... (โค้ดหน้ากราฟของคุณ - เหมือนเดิม) ...
     today = timezone.now().date()
-
     total_vehicles = Vehicle.objects.count()
     inspections_today = InspectionRecord.objects.filter(timestamp__date=today).count()
-
     active_issues = ProblemReport.objects.filter(
         Q(status='NEW') | Q(status='IN_PROGRESS')
     ).count()
     
     problem_stats = ProblemReport.objects.values('status').annotate(count=Count('status'))
-
     pie_labels = []
     pie_data = []
     for item in problem_stats:
         pie_labels.append(item['status'])
         pie_data.append(item['count'])
+    
     last_7_days_data = []
     last_7_days_labels = []
-    
     for i in range(6, -1, -1):
         date = today - timedelta(days=i)
         count = InspectionRecord.objects.filter(timestamp__date=date).count()
         last_7_days_labels.append(date.strftime('%d/%m'))
         last_7_days_data.append(count)
+
     recent_inspections = InspectionRecord.objects.select_related('vehicle', 'driver').order_by('-timestamp')[:5]
     recent_problems = ProblemReport.objects.filter(status='NEW').order_by('-created_at')[:5]
 
@@ -167,14 +187,30 @@ def admin_dashboard(request):
         'total_vehicles': total_vehicles,
         'inspections_today': inspections_today,
         'active_issues': active_issues,
-        
         'pie_labels': json.dumps(pie_labels),
         'pie_data': json.dumps(pie_data),
-        
         'bar_labels': json.dumps(last_7_days_labels),
         'bar_data': json.dumps(last_7_days_data),
-        
         'recent_inspections': recent_inspections,
         'recent_problems': recent_problems,
     }
     return render(request, 'inspection/admin_dashboard.html', context)
+
+
+# ==================================
+# 5. LOGIN ROUTER (CLEAN VERSION)
+# ==================================
+@login_required
+def login_router_view(request):
+    """
+    เช็คว่าเป็นแอดมิน หรือ คนขับรถ แล้วส่งไปคนละหน้า
+    (ถูกเรียกใช้โดย admin.site.index)
+    """
+    is_driver = request.user.groups.filter(name='Driver').exists()
+    
+    if request.user.is_superuser or not is_driver:
+        # ถ้าเป็น Superuser หรือ "ไม่ได้" อยู่ในกลุ่ม 'Driver'
+        return redirect('admin_dashboard') # ไปหน้าแดชบอร์ดแอดมิน (กราฟ)
+    else:
+        # ถ้าอยู่ในกลุ่ม 'Driver'
+        return redirect('driver_dashboard') # ไปหน้าแดชบอร์ดคนขับ (To-Do List)

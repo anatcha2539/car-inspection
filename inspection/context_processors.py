@@ -1,14 +1,21 @@
 from .models import ProblemReport
 
 def notification_processor(request):
-    """
-    ตัวประมวลผลที่ส่งข้อมูลการแจ้งเตือนไปยังทุก Template
-    """
-    pending_problem_count = 0
-
     if request.user.is_authenticated and request.user.is_staff:
-
-        pending_problem_count = ProblemReport.objects.filter(status='NEW').count()
-    return {
-        'pending_problem_count': pending_problem_count
-    }
+        # นับปัญหาใหม่ที่ยังไม่ถูกอ่าน
+        new_problems_count = ProblemReport.objects.filter(
+            status='NEW', 
+            is_read=False
+        ).count()
+        
+        # ดึงปัญหา 5 รายการล่าสุดมาแสดง
+        recent_problems = ProblemReport.objects.filter(
+            status='NEW',
+            is_read=False
+        ).order_by('-created_at')[:5]
+        
+        return {
+            'new_problems_count': new_problems_count,
+            'recent_problems_list': recent_problems,
+        }
+    return {}
