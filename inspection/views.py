@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import InspectionRecord, ProblemReport, Schedule, Vehicle
-from .forms import InspectionRecordForm, ProblemReportForm
+from .forms import InspectionRecordForm, ProblemReportForm, FUEL_LEVEL_CHOICES
 from django.contrib import messages
 from django.utils import timezone
 from .forms import CHECKLIST_CATEGORIES
@@ -33,10 +33,6 @@ def driver_dashboard(request):
         'my_inspections': my_inspections,
     }
     return render(request, 'inspection/dashboard.html', context)
-
-# ==================================
-# 2. INSPECTION FORM (✅ แก้ Bug แล้ว)
-# ==================================
 @login_required
 def inspect_vehicle_form(request, schedule_id):
     schedule_item = get_object_or_404(
@@ -54,8 +50,6 @@ def inspect_vehicle_form(request, schedule_id):
 
     if request.method == 'POST':
         inspection_form = InspectionRecordForm(request.POST, initial_vehicle=vehicle_from_schedule)
-        
-        # (แก้ Bug: ลบ initial_vehicle ออกจาก ProblemReportForm)
         problem_form = ProblemReportForm(request.POST) 
 
         if 'submit_inspection' in request.POST:
@@ -67,8 +61,6 @@ def inspect_vehicle_form(request, schedule_id):
 
                 schedule_item.status = 'DONE'
                 schedule_item.save()
-
-                # (ส่วนเช็คเลขไมล์)
                 try:
                     vehicle = record.vehicle
                     current_mileage = record.odometer_reading
@@ -144,11 +136,15 @@ def print_inspection(request, record_id):
                 'label': label,
                 'status': status
             })
+    fuel_map = dict(FUEL_LEVEL_CHOICES)
+    fuel_key = record.checklist_data.get('fuel_level')
+    formatted_fuel_level = fuel_map.get(fuel_key, '-')
 
     context = {
         'record': record,
         'formatted_checklist': formatted_checklist,
         'today': timezone.now().date(),
+        'formatted_fuel_level': formatted_fuel_level,
     }
     return render(request, 'inspection/print_layout.html', context)
 

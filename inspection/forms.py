@@ -1,7 +1,14 @@
 from django import forms
 from .models import InspectionRecord, ProblemReport
 
-# --- (1) Checklist ใหม่ อิงตาม PDF ---
+FUEL_LEVEL_CHOICES = [
+    ('5/5', 'เต็มถัง'),
+    ('4/5', '3/4'),
+    ('3/5', 'ครึ่งถัง'),
+    ('2/5', '1/4'),
+    ('1/5', 'ใกล้หมด'),
+]
+
 CHECKLIST_CATEGORIES = {
     '1. ระบบเครื่องยนต์': [
         ('engine_water', 'น้ำระบายความร้อน'),
@@ -52,10 +59,16 @@ CHECKLIST_CATEGORIES = {
         ('other_ac', 'แอร์รถยนต์'),
     ],
 }
-# --- (จบ Checklist ใหม่) ---
 
 
 class InspectionRecordForm(forms.ModelForm):
+    fuel_level = forms.ChoiceField(
+        choices=FUEL_LEVEL_CHOICES,
+        label='ระดับน้ำมัน',
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        required=True,
+        
+    )
     class Meta:
         model = InspectionRecord
         fields = ['odometer_reading', 'remarks']
@@ -83,7 +96,6 @@ class InspectionRecordForm(forms.ModelForm):
                     initial='OK',
                     required=True
                 )
-                # (เก็บ "ชื่อฟิลด์" (string) เพื่อแก้ Bug)
                 self.checklist_fields[category].append(field_name)
 
     def save(self, commit=True):
@@ -95,6 +107,9 @@ class InspectionRecordForm(forms.ModelForm):
                 db_key = key.replace('checklist_', '')
                 checklist_data[db_key] = self.cleaned_data.get(key)
         
+        if 'fuel_level' in self.cleaned_data:
+            checklist_data['fuel_level'] = self.cleaned_data['fuel_level']
+
         instance.checklist_data = checklist_data
         
         if commit:
@@ -109,7 +124,7 @@ class ProblemReportForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'อธิบายปัญหาที่พบ...'}),
         }
     
-    # (เพิ่ม __init__ เพื่อแก้ Bug)
     def __init__(self, *args, **kwargs):
         self.initial_vehicle = kwargs.pop('initial_vehicle', None)
         super().__init__(*args, **kwargs)
+

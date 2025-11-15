@@ -58,6 +58,13 @@
                             <div class="text-danger small">{{ inspection_form.odometer_reading.errors.as_text }}</div>
                         {% endif %}
                     </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label" for="{{ inspection_form.fuel_level.id_for_label }}">ระดับน้ำมัน</label>
+                        {{ inspection_form.fuel_level }}
+                        {% if inspection_form.fuel_level.errors %}
+                            <div class="text-danger">{{ inspection_form.fuel_level.errors.as_text }}</div>
+                        {% endif %}
+                    </div>
                 </div>
 
                 <hr>

@@ -5,7 +5,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # --- นี่คือค่าที่เราใช้บน Server ---
 SECRET_KEY = 'django-insecure-k29%4al@#4l8a*5=wqfq*&b%aw%(!j3yf71qyfopl#xvk8%x#e' 
 # (ถ้าใช้บน VS Code ให้แก้ DEBUG = True และ ALLOWED_HOSTS = [])
-DEBUG = False
+DEBUG = True
 ALLOWED_HOSTS = ['anatcha.pythonanywhere.com', '127.0.0.1', 'localhost']
 
 INSTALLED_APPS = [
@@ -15,8 +15,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'inspection', # แอพของเรา
-    'inspection.templatetags', # (เพื่อให้ฟิลเตอร์ฟอร์มทำงาน)
+    'inspection',
+    'inspection.templatetags',
 ]
 
 MIDDLEWARE = [
@@ -72,8 +72,6 @@ STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / "staticfiles" # สำหรับ Server
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# --- ✅ (1) นี่คือจุดที่แก้ ---
-# (ชี้ไปที่ Admin Login และเด้งไปที่ "ทางแยก")
 LOGIN_URL = '/admin/login/'
 LOGIN_REDIRECT_URL = '/router/' # (สำคัญมาก)
 LOGOUT_REDIRECT_URL = '/admin/login/'

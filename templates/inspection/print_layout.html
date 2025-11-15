@@ -136,6 +136,14 @@
                 <small class="text-muted d-block">เลขไมล์ (กม.)</small>
                 <h6 class="mb-0">{{ record.odometer_reading|floatformat:"0" }} กม.</h6>
             </div>
+
+
+            <div class="col-4">
+                <small class="text-muted d-block">ระดับน้ำมัน</small>
+                <h6 class="mb-0">
+                    {{ formatted_fuel_level|default:"-" }}
+                </h6>
+            </div>
         </div>
 
         <h5 class="mb-2 mt-4">ผลการตรวจเช็ค</h5>
