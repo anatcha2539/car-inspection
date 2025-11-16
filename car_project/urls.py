@@ -1,8 +1,6 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
-
-# (1) Import ตัวแยกทางของเรามา
 from inspection.views import login_router_view 
 
 admin.site.site_header = "ระบบตรวจเช็คสภาพรถ"

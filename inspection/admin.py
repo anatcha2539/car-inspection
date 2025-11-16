@@ -18,7 +18,7 @@ class InspectionRecordAdmin(admin.ModelAdmin):
     list_display = ('timestamp', 'vehicle', 'driver', 'odometer_reading')
     list_filter = ('timestamp', 'driver', 'vehicle')
     date_hierarchy = 'timestamp'
-    readonly_fields = ('checklist_data',) # แสดงผล JSON แต่ไม่ให้แก้
+    readonly_fields = ('checklist_data',)
 
 @admin.register(ProblemReport)
 class ProblemReportAdmin(admin.ModelAdmin):

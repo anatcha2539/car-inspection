@@ -1,8 +1,6 @@
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-# --- นี่คือค่าที่เราใช้บน Server ---
 SECRET_KEY = 'django-insecure-k29%4al@#4l8a*5=wqfq*&b%aw%(!j3yf71qyfopl#xvk8%x#e' 
 # (ถ้าใช้บน VS Code ให้แก้ DEBUG = True และ ALLOWED_HOSTS = [])
 DEBUG = True
@@ -43,7 +41,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'inspection.context_processors.notification_processor',
             ],
-            'libraries': { # (เพิ่มส่วนนี้)
+            'libraries': {
                 'form_filters': 'inspection.templatetags.form_filters',
             }
         },
@@ -69,9 +67,9 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / "staticfiles" # สำหรับ Server
+STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = '/admin/login/'
-LOGIN_REDIRECT_URL = '/router/' # (สำคัญมาก)
+LOGIN_REDIRECT_URL = '/router/'
 LOGOUT_REDIRECT_URL = '/admin/login/'

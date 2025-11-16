@@ -12,56 +12,45 @@
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        /* 1. ตั้งค่าฟอนต์หลักและพื้นหลัง */
         body {
             font-family: 'Kanit', sans-serif;
-            background-color: #f0f2f5; /* สีเทาอ่อนๆ */
+            background-color: #f0f2f5;
             display: flex;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
             margin: 0;
         }
-
-        /* 2. สไตล์ของการ์ดล็อกอิน */
         .login-card {
             width: 100%;
-            max-width: 450px; /* ความกว้างสูงสุดของการ์ด */
+            max-width: 450px;
             padding: 2rem;
             border: none;
-            border-radius: 12px; /* ขอบโค้งมน */
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* เพิ่มเงาให้ดูมีมิติ */
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             background-color: #ffffff;
         }
-
-        /* 3. สไตล์หัวข้อ */
         .login-header {
             text-align: center;
             margin-bottom: 2rem;
         }
         .login-header h2 {
-            font-weight: 700; /* ตัวหนา */
+            font-weight: 700;
             color: #333;
         }
         .login-header p {
             font-size: 1rem;
-            color: #6c757d; /* สีเทาเข้ม */
+            color: #6c757d;
         }
-        
-        /* 4. สไตล์ปุ่ม */
         .btn-login {
-            font-weight: 600; /* ตัวหนา */
+            font-weight: 600;
             letter-spacing: 0.5px;
-            padding: 0.75rem; /* ปุ่มใหญ่ขึ้น */
+            padding: 0.75rem;
             border-radius: 8px;
         }
-
-        /* 5. สไตล์ฟอร์ม */
         .form-floating label {
             font-weight: 500;
         }
-        
-        /* 6. สไตล์การแสดงข้อความ Error (จาก Django messages) */
         .alert {
             font-weight: 500;
         }

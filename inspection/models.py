@@ -6,8 +6,6 @@ class Vehicle(models.Model):
     license_plate = models.CharField(max_length=20, unique=True, verbose_name="ทะเบียนรถ")
     model = models.CharField(max_length=100, verbose_name="รุ่น/ยี่ห้อ")
     vehicle_type = models.CharField(max_length=50, verbose_name="ประเภทรถ", blank=True)
-    
-    # สำหรับการแจ้งเตือน
     last_service_mileage = models.PositiveIntegerField(default=0, verbose_name="เลขไมล์เข้าศูนย์ครั้งล่าสุด")
     service_interval_km = models.PositiveIntegerField(default=10000, verbose_name="ระยะเข้าศูนย์ (กม.)")
 
@@ -34,7 +32,7 @@ class Schedule(models.Model):
     class Meta:
         verbose_name = "ตารางเวร"
         verbose_name_plural = "ตารางเวร"
-        unique_together = ('driver', 'vehicle', 'date') # กันตารางซ้ำ
+        unique_together = ('driver', 'vehicle', 'date')
 
 class InspectionRecord(models.Model):
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, verbose_name="รถ")

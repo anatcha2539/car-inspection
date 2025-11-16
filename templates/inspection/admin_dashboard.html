@@ -109,7 +109,6 @@
 
 {% block extra_scripts %}
 <script>
-    // (1) กราฟแท่ง
     const ctxBar = document.getElementById('inspectionChart');
     new Chart(ctxBar, {
         type: 'bar',
@@ -131,8 +130,6 @@
             plugins: { legend: { display: false } }
         }
     });
-
-    // (2) กราฟวงกลม
     const ctxPie = document.getElementById('problemChart');
     new Chart(ctxPie, {
         type: 'pie',
@@ -142,9 +139,9 @@
                 label: 'สถานะ',
                 data: {{ pie_data|safe }},
                 backgroundColor: [
-                    'rgba(255, 99, 132, 0.6)', // NEW (Red)
-                    'rgba(255, 206, 86, 0.6)', // IN_PROGRESS (Yellow)
-                    'rgba(75, 192, 192, 0.6)'  // RESOLVED (Green)
+                    'rgba(255, 99, 132, 0.6)',
+                    'rgba(255, 206, 86, 0.6)',
+                    'rgba(75, 192, 192, 0.6)',
                 ]
             }]
         },

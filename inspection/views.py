@@ -10,9 +10,6 @@ from django.db.models import Count, Q
 from datetime import timedelta
 import json
 
-# ==================================
-# 1. DRIVER DASHBOARD (WEEKLY VIEW)
-# ==================================
 @login_required
 def driver_dashboard(request):
     today = timezone.now().date()
@@ -106,10 +103,7 @@ def inspect_vehicle_form(request, schedule_id):
                 messages.error(request, 'ข้อมูลการแจ้งปัญหาไม่ถูกต้อง กรุณาตรวจสอบ')
 
     else:
-        # (นี่คือส่วน GET request)
         inspection_form = InspectionRecordForm(initial=initial_data, initial_vehicle=vehicle_from_schedule)
-        
-        # (แก้ Bug: ลบ initial_vehicle ออกจาก ProblemReportForm)
         problem_form = ProblemReportForm(initial=initial_data)
 
     context = {
@@ -118,10 +112,6 @@ def inspect_vehicle_form(request, schedule_id):
         'problem_form': problem_form,
     }
     return render(request, 'inspection/inspection_form.html', context)
-
-# ==================================
-# 3. PRINT LAYOUT
-# ==================================
 @login_required
 def print_inspection(request, record_id):
     record = get_object_or_404(InspectionRecord, pk=record_id)
@@ -148,12 +138,8 @@ def print_inspection(request, record_id):
     }
     return render(request, 'inspection/print_layout.html', context)
 
-# ==================================
-# 4. ADMIN DASHBOARD
-# ==================================
 @staff_member_required
 def admin_dashboard(request):
-    # ... (โค้ดหน้ากราฟของคุณ - เหมือนเดิม) ...
     today = timezone.now().date()
     total_vehicles = Vehicle.objects.count()
     inspections_today = InspectionRecord.objects.filter(timestamp__date=today).count()
@@ -192,10 +178,6 @@ def admin_dashboard(request):
     }
     return render(request, 'inspection/admin_dashboard.html', context)
 
-
-# ==================================
-# 5. LOGIN ROUTER (CLEAN VERSION)
-# ==================================
 @login_required
 def login_router_view(request):
     """
@@ -205,8 +187,6 @@ def login_router_view(request):
     is_driver = request.user.groups.filter(name='Driver').exists()
     
     if request.user.is_superuser or not is_driver:
-        # ถ้าเป็น Superuser หรือ "ไม่ได้" อยู่ในกลุ่ม 'Driver'
-        return redirect('admin_dashboard') # ไปหน้าแดชบอร์ดแอดมิน (กราฟ)
+        return redirect('admin_dashboard')
     else:
-        # ถ้าอยู่ในกลุ่ม 'Driver'
-        return redirect('driver_dashboard') # ไปหน้าแดชบอร์ดคนขับ (To-Do List)
+        return redirect('driver_dashboard')

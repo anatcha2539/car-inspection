@@ -15,6 +15,6 @@ def get_field(form, field_name):
     อนุญาตให้เข้าถึงฟิลด์ฟอร์มด้วย "ชื่อ" (string) ในเทมเพลต
     """
     try:
-        return form[field_name] # คืนค่าเป็น BoundField
+        return form[field_name]
     except KeyError:
         return None
