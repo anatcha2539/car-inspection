@@ -161,6 +161,7 @@ def admin_dashboard(request):
         Q(status='NEW') | Q(status='IN_PROGRESS')
     ).count()
     
+    # Pie Chart (เหมือนเดิม)
     problem_stats = ProblemReport.objects.values('status').annotate(count=Count('status'))
     pie_labels = []
     pie_data = []
@@ -168,14 +169,26 @@ def admin_dashboard(request):
         pie_labels.append(item['status'])
         pie_data.append(item['count'])
     
-    last_7_days_data = []
-    last_7_days_labels = []
-    for i in range(6, -1, -1):
-        date = today - timedelta(days=i)
-        count = InspectionRecord.objects.filter(timestamp__date=date).count()
-        last_7_days_labels.append(date.strftime('%d/%m'))
-        last_7_days_data.append(count)
+    # --- 🟢 Bar Chart (คำนวณรายสัปดาห์ - 4 สัปดาห์ล่าสุด) ---
+    weeks_data = []
+    weeks_labels = []
 
+    # หาวัน "จันทร์" ของสัปดาห์นี้
+    current_week_start = today - timedelta(days=today.weekday())
+
+    # วนลูปย้อนหลัง 4 สัปดาห์
+    for i in range(3, -1, -1):
+        start_date = current_week_start - timedelta(weeks=i)
+        end_date = start_date + timedelta(days=6)
+
+        count = InspectionRecord.objects.filter(
+            timestamp__date__range=[start_date, end_date]
+        ).count()
+
+        label = f"{start_date.strftime('%d/%m')} - {end_date.strftime('%d/%m')}"
+        weeks_labels.append(label)
+        weeks_data.append(count)
+    
     recent_inspections = InspectionRecord.objects.select_related('vehicle', 'driver').order_by('-timestamp')[:5]
     recent_problems = ProblemReport.objects.filter(status='NEW').order_by('-created_at')[:5]
 
@@ -185,8 +198,11 @@ def admin_dashboard(request):
         'active_issues': active_issues,
         'pie_labels': json.dumps(pie_labels),
         'pie_data': json.dumps(pie_data),
-        'bar_labels': json.dumps(last_7_days_labels),
-        'bar_data': json.dumps(last_7_days_data),
+        
+        # ✅ แก้ตรงนี้: ใช้ weeks_labels และ weeks_data แทนของเก่า
+        'bar_labels': json.dumps(weeks_labels), 
+        'bar_data': json.dumps(weeks_data),
+        
         'recent_inspections': recent_inspections,
         'recent_problems': recent_problems,
     }
