@@ -161,22 +161,17 @@ def admin_dashboard(request):
         Q(status='NEW') | Q(status='IN_PROGRESS')
     ).count()
     
-    # Pie Chart (เหมือนเดิม)
     problem_stats = ProblemReport.objects.values('status').annotate(count=Count('status'))
     pie_labels = []
     pie_data = []
     for item in problem_stats:
         pie_labels.append(item['status'])
         pie_data.append(item['count'])
-    
-    # --- 🟢 Bar Chart (คำนวณรายสัปดาห์ - 4 สัปดาห์ล่าสุด) ---
     weeks_data = []
     weeks_labels = []
 
-    # หาวัน "จันทร์" ของสัปดาห์นี้
     current_week_start = today - timedelta(days=today.weekday())
 
-    # วนลูปย้อนหลัง 4 สัปดาห์
     for i in range(3, -1, -1):
         start_date = current_week_start - timedelta(weeks=i)
         end_date = start_date + timedelta(days=6)
@@ -198,11 +193,8 @@ def admin_dashboard(request):
         'active_issues': active_issues,
         'pie_labels': json.dumps(pie_labels),
         'pie_data': json.dumps(pie_data),
-        
-        # ✅ แก้ตรงนี้: ใช้ weeks_labels และ weeks_data แทนของเก่า
         'bar_labels': json.dumps(weeks_labels), 
-        'bar_data': json.dumps(weeks_data),
-        
+        'bar_data': json.dumps(weeks_data), 
         'recent_inspections': recent_inspections,
         'recent_problems': recent_problems,
     }
