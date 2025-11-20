@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
-{% load form_filters %} {% block title %}หน้าตรวจรถ (To-Do){% endblock %}
+{% load form_filters %} 
+
+{% block title %}หน้าตรวจรถ (To-Do){% endblock %}
 
 {% block content %}
 
@@ -7,6 +9,11 @@
     <div>
         <h2 class="h4 mb-0">👋 สวัสดี, {{ user.first_name|default:user.username }}</h2>
         <small class="text-muted">พนักงานตรวจสภาพ / Driver</small>
+    </div>
+    <div class="text-end">
+        <span class="badge bg-white text-dark border shadow-sm p-2">
+            <i class="bi bi-calendar-event"></i> วันนี้: {{ today|date:"j F Y" }}
+        </span>
     </div>
 </div>
 <hr>
@@ -26,81 +33,153 @@
     {% endfor %}
 {% endif %}
 
-<div class="card shadow-sm mb-4">
-    <div class="card-header bg-primary text-white">
+<div class="row">
+    <div class="col-lg-8">
         
-        <h3 class="h5 mb-0">
-            <i class="bi bi-calendar-week"></i> 
-            งานที่ต้องตรวจประจำสัปดาห์ ({{ start_of_week|date:"j M" }} - {{ end_of_week|date:"j M Y" }})
-        </h3>
-    </div>
-
-    {% if todays_schedules %} <ul class="list-group list-group-flush">
-            
-            {% for schedule in todays_schedules %}
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                <div>
-                    <h5 class="mb-1">
-                        {% if schedule.status == 'DONE' %}
-                            <i class="bi bi-check-circle-fill text-success"></i> 
-                            <del>{{ schedule.vehicle.license_plate }}</del>
-                        {% else %}
-                            <i class="bi bi-car-front-fill text-primary"></i> 
-                            <strong>{{ schedule.vehicle.license_plate }}</strong>
-                        {% endif %}
-                    </h5>
-                    <small class="text-muted">{{ schedule.date|date:"l, j M" }} | {{ schedule.vehicle.model }}</small>
-                </div>
-
-                {% if schedule.status == 'PENDING' %}
-                    <a href="{% url 'inspect_vehicle' schedule.id %}" class="btn btn-primary">
-                        <i class="bi bi-clipboard2-check"></i> เริ่มตรวจเช็ค
-                    </a>
-                {% else %}
-                    <span class="badge bg-success rounded-pill">ตรวจเรียบร้อยแล้ว</span>
-                {% endif %}
-
-            </li>
-            {% endfor %}
-            
-        </ul>
-    {% else %}
-        <div class="card-body text-center py-5">
-            <i class="bi bi-calendar-check display-4 text-muted mb-3"></i>
-            
-            <h4 class="text-muted">สัปดาห์นี้ไม่มีรายการต้องตรวจ</h4>
-            <p class="text-muted">คุณตรวจครบแล้ว หรือยังไม่มีตารางเวรในสัปดาห์นี้</p>
-        </div>
-    {% endif %}
-</div>
-
-<div class="card shadow-sm mt-4">
-    <div class="card-header">
-        <h3 class="h5 mb-0"><i class="bi bi-clock-history"></i> ประวัติการตรวจ 10 ครั้งล่าสุด</h3>
-    </div>
-    <div class="table-responsive">
-        <table class="table table-striped table-hover mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th>วันที่ตรวจ</th>
-                    <th>รถ</th>
-                    <th>เลขไมล์</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for record in my_inspections %}
-                <tr>
-                    <td>{{ record.timestamp|date:"d/m/Y H:i" }}</td>
-                    <td>{{ record.vehicle.license_plate }}</td>
-                    <td>{{ record.odometer_reading|floatformat:"0" }} กม.</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="3" class="text-center py-3 text-muted">ยังไม่มีประวัติการตรวจเช็ค</td>
-                </tr>
+        {% if overdue_schedules %}
+        <div class="card shadow-sm mb-4 border-danger">
+            <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle-fill"></i> งานตกค้าง (ตรวจย้อนหลัง)</h5>
+                <span class="badge bg-white text-danger">{{ overdue_schedules.count }} รายการ</span>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for schedule in overdue_schedules %}
+                <li class="list-group-item d-flex justify-content-between align-items-center p-3 bg-light">
+                    <div>
+                        <h5 class="mb-1 text-danger">
+                            <i class="bi bi-clock-history"></i> 
+                            {{ schedule.vehicle.license_plate }}
+                        </h5>
+                        <small class="text-muted">
+                            กำหนดเดิม: <strong>{{ schedule.date|date:"j M Y" }}</strong> 
+                            ({{ schedule.vehicle.model }})
+                        </small>
+                    </div>
+                    <div>
+                        <a href="{% url 'start_inspection' schedule.id %}" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-arrow-counterclockwise"></i> ตรวจย้อนหลัง
+                        </a>
+                    </div>
+                </li>
                 {% endfor %}
-            </tbody>
-        </table>
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="card shadow-sm mb-4 border-primary">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-check-square"></i> งานที่ต้องทำ "วันนี้"</h5>
+                <small class="text-white-50">{{ today|date:"l, j M" }}</small>
+            </div>
+
+            {% if todays_schedules %}
+                <ul class="list-group list-group-flush">
+                    {% for schedule in todays_schedules %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                        <div>
+                            <h5 class="mb-1">
+                                {% if schedule.status == 'DONE' %}
+                                    <i class="bi bi-check-circle-fill text-success"></i> 
+                                    <del class="text-muted">{{ schedule.vehicle.license_plate }}</del>
+                                {% else %}
+                                    <i class="bi bi-truck-front-fill text-primary"></i> 
+                                    <span class="fw-bold text-primary">{{ schedule.vehicle.license_plate }}</span>
+                                {% endif %}
+                            </h5>
+                            <small class="text-muted">{{ schedule.vehicle.model }}</small>
+                        </div>
+
+                        <div>
+                            {% if schedule.status == 'PENDING' %}
+                                <a href="{% url 'start_inspection' schedule.id %}" class="btn btn-primary">
+                                    <i class="bi bi-play-circle"></i> เริ่มตรวจเช็ค
+                                </a>
+                            {% else %}
+                                <span class="badge bg-success rounded-pill px-3 py-2">
+                                    <i class="bi bi-check2"></i> ตรวจเรียบร้อย
+                                </span>
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="card-body text-center py-5 text-muted">
+                    <i class="bi bi-cup-hot display-4 mb-3 d-block"></i>
+                    <p class="mb-0">วันนี้ไม่มีเวรตรวจรถครับ พักผ่อนได้เลย!</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0 text-secondary"><i class="bi bi-calendar-week"></i> ตารางเวรล่วงหน้า (เร็วๆ นี้)</h5>
+            </div>
+            {% if upcoming_schedules %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3">วันที่</th>
+                                <th>ทะเบียนรถ</th>
+                                <th>รุ่น</th>
+                                <th>สถานะ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for schedule in upcoming_schedules %}
+                            <tr>
+                                <td class="ps-3 fw-bold text-primary">{{ schedule.date|date:"j M Y" }}</td>
+                                <td>{{ schedule.vehicle.license_plate }}</td>
+                                <td>{{ schedule.vehicle.model }}</td>
+                                <td><span class="badge bg-light text-secondary border">รอถึงวันตรวจ</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="card-body text-center py-4 text-muted">
+                    <small>ยังไม่มีตารางเวรล่วงหน้า</small>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0 h6"><i class="bi bi-clock-history"></i> ประวัติการตรวจ 10 ครั้งล่าสุด</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-striped table-hover mb-0" style="font-size: 0.9rem;">
+                    <thead class="table-light">
+                        <tr>
+                            <th>วันที่</th>
+                            <th>รถ</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in my_inspections %}
+                        <tr>
+                            <td>{{ record.timestamp|date:"d/m" }}</td>
+                            <td>{{ record.vehicle.license_plate }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'print_inspection' record.id %}" target="_blank" class="text-secondary" title="พิมพ์">
+                                    <i class="bi bi-printer"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center py-3 text-muted">ยังไม่มีประวัติ</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 

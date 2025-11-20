@@ -13,23 +13,36 @@ import json
 @login_required
 def driver_dashboard(request):
     today = timezone.now().date()
-    start_of_week = today - timedelta(days=today.weekday())
-    end_of_week = start_of_week + timedelta(days=6)
-    
-    weekly_schedules = Schedule.objects.filter(
-        driver=request.user, 
-        date__range=[start_of_week, end_of_week]
-    ).order_by('date', 'vehicle__license_plate')
-    
+
+    # 1. งานวันนี้
+    todays_schedules = Schedule.objects.filter(
+        driver=request.user,
+        date=today,
+    ).order_by('vehicle__license_plate')
+
+    # 2. งานล่วงหน้า (อนาคต)
+    upcoming_schedules = Schedule.objects.filter(
+        driver=request.user,
+        date__gt=today
+    ).order_by('date')
+
+    overdue_schedules = Schedule.objects.filter(
+        driver=request.user,
+        date__lt=today,
+        status='PENDING'
+    ).order_by('date')
+
     my_inspections = InspectionRecord.objects.filter(driver=request.user).order_by('-timestamp')[:10]
 
     context = {
-        'todays_schedules': weekly_schedules,
-        'start_of_week': start_of_week,
-        'end_of_week': end_of_week,
+        'todays_schedules': todays_schedules,
+        'upcoming_schedules': upcoming_schedules, 
+        'overdue_schedules': overdue_schedules,
         'my_inspections': my_inspections,
+        'today': today,
     }
     return render(request, 'inspection/dashboard.html', context)
+
 @login_required
 def inspect_vehicle_form(request, schedule_id):
     schedule_item = get_object_or_404(
@@ -112,6 +125,7 @@ def inspect_vehicle_form(request, schedule_id):
         'problem_form': problem_form,
     }
     return render(request, 'inspection/inspection_form.html', context)
+
 @login_required
 def print_inspection(request, record_id):
     record = get_object_or_404(InspectionRecord, pk=record_id)

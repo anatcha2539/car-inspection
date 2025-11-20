@@ -1,5 +1,7 @@
 from django.contrib import admin
 from .models import Vehicle, Schedule, InspectionRecord, ProblemReport
+from django.utils.html import format_html
+from django.urls import reverse
 
 @admin.register(Vehicle)
 class VehicleAdmin(admin.ModelAdmin):
@@ -15,10 +17,20 @@ class ScheduleAdmin(admin.ModelAdmin):
 
 @admin.register(InspectionRecord)
 class InspectionRecordAdmin(admin.ModelAdmin):
-    list_display = ('timestamp', 'vehicle', 'driver', 'odometer_reading')
+    list_display = ('timestamp', 'vehicle', 'driver', 'odometer_reading', 'print_button')
+    search_fields = ('vehicle__license_plate', 'vehicle__model', 'driver__username', 'driver__first_name')
     list_filter = ('timestamp', 'driver', 'vehicle')
+    ordering = ('-timestamp',)
     date_hierarchy = 'timestamp'
     readonly_fields = ('checklist_data',)
+
+    def print_button(self, obj):
+        url = reverse('print_inspection', args=[obj.id])
+        return format_html(
+            '<a class="btn btn-sm btn-info" href="{}" target="_blank">'
+            '<i class="fas fa-print"></i> พิมพ์ใบตรวจ</a>',
+            url
+        )
 
 @admin.register(ProblemReport)
 class ProblemReportAdmin(admin.ModelAdmin):
@@ -26,3 +38,9 @@ class ProblemReportAdmin(admin.ModelAdmin):
     list_filter = ('status', 'created_at', 'is_read')
     search_fields = ('description', 'vehicle__license_plate')
     readonly_fields = ('created_at',)
+
+    actions = ['mark_as_read']
+
+    def mark_as_read(self, request, queryset):
+        queryset.update(is_read=True)
+    mark_as_read.short_description = "ทำเครื่องหมายว่าอ่านแล้ว"

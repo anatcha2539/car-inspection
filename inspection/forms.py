@@ -1,5 +1,7 @@
 from django import forms
 from .models import InspectionRecord, ProblemReport
+import datetime
+from django.utils import timezone
 
 FUEL_LEVEL_CHOICES = [
     ('5/5', 'เต็มถัง'),
@@ -81,6 +83,9 @@ class InspectionRecordForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.initial_vehicle = kwargs.pop('initial_vehicle', None)
         super().__init__(*args, **kwargs)
+
+        if not self.initial.get('timestamp'):
+            self.initial['timestamp'] = timezone.localtime(timezone.now()).strftime('%Y-%m-%dT%H:%M')
         
         self.checklist_fields = {}
         radio_choices = [('OK', 'ปกติ'), ('ISSUE', 'มีปัญหา')]

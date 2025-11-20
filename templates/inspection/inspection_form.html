@@ -49,6 +49,17 @@
                         <label class="form-label">รถทะเบียน</label>
                         <input type="text" class="form-control" value="{{ schedule_item.vehicle.license_plate }}" disabled>
                     </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label" for="{{ inspection_form.timestamp.id_for_label }}">
+                            {{ inspection_form.timestamp.label }}
+                        </label>
+                        {{ inspection_form.timestamp }}
+                        {% if inspection_form.timestamp.errors %}
+                            <div class="text-danger small">{{ inspection_form.timestamp.errprs.as_text }}</div>
+                        {% endif %}
+                    </div>
+                    
                     <div class="col-md-6 mb-3">
                         <label class="form-label" for="{{ inspection_form.odometer_reading.id_for_label }}">เลขไมล์ปัจจุบัน (กม.)*</label>
                         {{ inspection_form.odometer_reading }}
